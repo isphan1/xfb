@@ -10,6 +10,8 @@ import Cookies from 'cookies'
             // Authorization: req.cookies.access_token ?
             // "JWT "+ req.cookies.access_token : null,
             "Content-Typ" : "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept",
         }
     })
 export default axiosInstance
