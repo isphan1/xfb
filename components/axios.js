@@ -1,17 +1,15 @@
 import axios from 'axios'
 import Cookies from 'cookies'
 
+    // const baseURL = "http://localhost:8000/api/"
+
     const baseURL = "https://xfbapp.herokuapp.com/api/"
 
     const axiosInstance = axios.create({
         baseURL:baseURL,
         timeout:5000,
         headers:{
-            // Authorization: req.cookies.access_token ?
-            // "JWT "+ req.cookies.access_token : null,
-            "Content-Typ" : "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers":"Origin, X-Requested-With, Content-Type, Accept",
+            'content-type': 'application/json',
         }
     })
 export default axiosInstance

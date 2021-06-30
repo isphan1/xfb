@@ -24,8 +24,8 @@ export default function auth(state=initialState,action){
             return{
                 ...state,
                 isLogin:true,
-                username:"",
-                user:action.payload,
+                username:action.payload,
+                user:"",
                 errors:{}
             }
         case SINGUP:

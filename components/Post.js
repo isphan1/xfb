@@ -31,7 +31,9 @@ import {
 } from "@material-ui/icons";
 
 const useStyles = makeStyles((theme) => ({
-  root: {},
+  root: {
+    marginBottom:"20px"
+  },
   customWidth: {
     minWidth: "40px",
     height: "30px",
@@ -315,7 +317,7 @@ export default function Post({ data }) {
 
   return (
     <>
-      <Card>
+      <Card className={classes.root}>
         <CardContent>
           <div className={classes.postHeader}>
             <img

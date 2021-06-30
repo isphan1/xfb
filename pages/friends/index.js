@@ -293,9 +293,10 @@ const APP_ID = "60cfe9b13605e4b79763dfc0";
     .then(({ data }) => data.data)
     .catch((e) => ({}));
 
-
   return {
-    props: {users},
+    props: {
+      users:users,
+    },
   };
 
 };

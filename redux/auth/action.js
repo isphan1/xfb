@@ -74,22 +74,20 @@ export const uSingIn = (data) => (dispatch) => {
       data:data,
       headers:{
           "content-type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
       }
       })
       .then(res=>
           {
-              Cookies.set('access_token',res.data.access_token)
-              Cookies.set('refresh_token',res.data.refresh_token)
+              Cookies.set('access_token',res.data.access)
+              Cookies.set('refresh_token',res.data.refresh)
           dispatch({
               type:SINGIN,
-              payload:res.data
+              payload:data.username
           })
       }
       )
       .catch(err=>
-          console.log(err)
+          {}
       )
 };
 
