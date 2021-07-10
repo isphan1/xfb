@@ -1,6 +1,10 @@
 import React from "react";
 import Comment from "../components/Comment";
 import RelaventMenu from "./RelaventMenu";
+import { reactionFilter } from "../common/reactionFilter";
+import LOADING from "../common/Loading";
+import moment from "moment";
+
 import {
   Card,
   CardContent,
@@ -11,7 +15,9 @@ import {
   IconButton,
   useMediaQuery,
   InputBase,
+  TextField,
   Tooltip,
+  Grid,
 } from "@material-ui/core";
 import {
   MoreHoriz,
@@ -29,10 +35,15 @@ import {
   EmojiEmotionsSharp,
   MoodBad,
 } from "@material-ui/icons";
+import { connect } from "react-redux";
+import { addComment, addPostReaction } from "../redux/post/action";
+import { v4 as uuidv4 } from "uuid";
+import Cookie, { set } from "js-cookie";
+import axiosInstance from "./axios";
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    marginBottom:"20px"
+    marginBottom: "20px",
   },
   customWidth: {
     minWidth: "40px",
@@ -89,6 +100,7 @@ const useStyles = makeStyles((theme) => ({
   },
   postText: {
     fontSize: "15px",
+    fontWeight:"500",
     margin: "10px 0",
     textAlign: "justify",
   },
@@ -132,7 +144,7 @@ const useStyles = makeStyles((theme) => ({
   postInput: {
     marginLeft: "5px",
     padding: "2.5px 10px",
-    backgroundColor: "#e9ebee",
+    backgroundColor: "#f5f5f7",
     borderRadius: "20px",
     width: "100%",
   },
@@ -144,11 +156,15 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-end",
-    cursor: "pointer",
+    // cursor: "pointer",
   },
   postCommentFilterTitle: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
     fontSize: "14px",
     fontWeight: "500",
+    cursor: "pointer",
   },
   iconDesign: {
     fontSize: "35px",
@@ -159,111 +175,78 @@ const useStyles = makeStyles((theme) => ({
     marginRight: "5px",
     cursor: "pointer",
     "&:hover": {
-      transform:"scale(1.15)"
+      transform: "scale(1.15)",
     },
   },
 }));
 
+const postReactionTooltipIcon = [
+  {
+    icon: (
+      <img src="/icons/likeb.png" style={{ width: "35px", height: "35px", backgroundColor:"#4285F4", marginRight:"7.5px", cursor:"pointer",marginTop:"2.5px", marginLeft:"7.5px" }} />
+
+    ),
+    title: "LIKE",
+  },
+  {
+    icon: (
+      <img src="/icons/love.png" style={{ width: "35px", height: "35px", marginRight:"7.5px", cursor:"pointer",marginTop:"2.5px" }} />
+
+    ),
+    title: "LOVE",
+  },
+  {
+    icon: (
+      <img src="/icons/laughing.png" style={{ width: "35px", height: "35px", marginRight:"7.5px", cursor:"pointer",marginTop:"2.5px" }} />
+
+    ),
+    title: "HAHA",
+  },
+  {
+    icon: (
+      <img src="/icons/wow.png" style={{ width: "35px", height: "35px", marginRight:"7.5px", cursor:"pointer",marginTop:"2.5px" }} />
+
+    ),
+    title: "WOW",
+  },
+  {
+    icon: (
+      <img src="/icons/sad.png" style={{ width: "35px", height: "35px", marginRight:"7.5px", cursor:"pointer",marginTop:"2.5px" }} />
+
+    ),
+    title: "SAD",
+  },
+  {
+    icon: (
+      <img src="/icons/angry.png" style={{ width: "35px", height: "35px", marginRight:"7.5px", cursor:"pointer",marginTop:"2.5px" }} />
+
+    ),
+    title: "ANGRY",
+  },
+
+];
+
+const reactionIconList = [
+  <img src="/icons/likeb.png" style={{ width: "18px", height: "18px",zIndex:"110", borderRadius:"30px",}} />,
+  <img src="/icons/love.png" style={{ width: "18px", height: "18px",zIndex:"110", borderRadius:"30px",}} />,
+  <img src="/icons/laughing.png" style={{ width: "18px", height: "18px",zIndex:"110", borderRadius:"30px",}} />,
+  <img src="/icons/wow.png" style={{ width: "18px", height: "18px",zIndex:"110", borderRadius:"30px",}} />,
+  <img src="/icons/angry.png" style={{ width: "18px", height: "18px",zIndex:"110", borderRadius:"30px",}} />,
+  <img src="/icons/sad.png" style={{ width: "18px", height: "18px",zIndex:"110", borderRadius:"30px",}} />
+]
+
 const postReviewIcon = [
   {
     icon: (
-      <ThumbUpSharp
-        size="small"
-        style={{
-          fontSize: "18px",
-          padding: "2.5px",
-          background: "#009cde",
-          color: "#fff",
-          borderRadius: "20px",
-        }}
-      />
+      <img src="/icons/likeb.png" style={{ width: "20px", height: "20px" }} />
+
     ),
     title: "Like",
   },
   {
-    icon: (
-      <Favorite
-        size="small"
-        style={{
-          fontSize: "18px",
-          padding: "2px",
-          background: "#e03251",
-          color: "#fff",
-          borderRadius: "20px",
-        }}
-      />
-    ),
+    icon:       <img src="/icons/love.png" style={{ width: "20px", height: "20px" }} />
+    ,
     title: "Love",
-  },
-];
-// const postReactionTooltipIcon = [
-//   {icon:<ThumbUpSharp
-
-//     className={classes.iconDesign}
-//     // style={{
-//     //   fontSize: "35px",
-//     //   padding: "2.5px",
-//     //   background: "#009cde",
-//     //   color: "#fff",
-//     //   borderRadius: "20px",
-//     //   marginRight: "5px",
-//     //   cursor:"pointer",
-
-//     // }}
-//   />},
-//   {icon:<Favorite
-//     style={{
-//       fontSize: "35px",
-//       padding: "2.5px",
-//       background: "#e03251",
-//       color: "#fff",
-//       borderRadius: "20px",
-//       marginRight: "5px",
-//       cursor:"pointer",
-//     }}
-//       />},
-//   {icon:<EmojiEmotionsSharp
-//     style={{
-//       fontSize: "35px",
-//       padding: "2.5px",
-//       background: "#ffbb00",
-//       color: "#fff",
-//       borderRadius: "20px",
-//       marginRight: "5px",
-//       cursor:"pointer",
-//     }}
-//   />},
-//   {icon:<MoodBad
-//     style={{
-//       fontSize: "35px",
-//       padding: "2.5px",
-//       background: "#ffbb00",
-//       color: "#000",
-//       borderRadius: "20px",
-//       marginRight: "5px",
-//       cursor:"pointer",
-//     }}
-//   />},
-// ];
-
-const buttons = [
-  // {
-  //   icon: <ThumbUpOutlined size="small" style={{ marginRight: "10px" }} />,
-  //   title: "Like",
-  //   tooltip: postReactionTooltipIcon,
-  // },
-  {
-    icon: <ChatBubbleOutline size="small" style={{ marginRight: "10px" }} />,
-    title: "Comment",
-  },
-  {
-    icon: (
-      <ReplyOutlined
-        size="small"
-        style={{ marginRight: "10px", transform: "rotate(90deg)" }}
-      />
-    ),
-    title: "Share",
   },
 ];
 
@@ -274,260 +257,538 @@ const postIconButton = [
   { icon: <PhotoSharp size="small" />, title: "Commet with a sticker" },
 ];
 
-const comments = [
-  {
-    text: "Israel launches air raids on Gaza, first since truce with Hamas",
-    subComments: [{ text: "Trauma and mental health in Gaza" }],
-  },
-  {
-    text: "The overnight air strikes gave way to calm by morning, and there were no reports of casualties on either sidemThe raids, the military said, came in response to the launching of the balloons, which caused 20 blazes in open fields in communities near Gaza ",
-    subComments: [
-      { text: "Gaza: The families left behind" },
-      {
-        text: "It was not immediately clear if there were casualties in Gaza as a result of the bombings.",
-      },
-    ],
-  },
-];
+const reactionList = {
+  Like: (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <img src="/icons/like.png" style={{ width: "20px", height: "20px" }} />
+      <Typography
+        style={{
+          fontSize: "15px",
+          fontWeight: 400,
+          marginLeft: "10px",
+          textTransform:"capitalize"
+        }}
+      >
+        Like
+      </Typography>
+    </div>
+  ),
 
-export default function Post({ data }) {
+  LIKE: (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <img src="/icons/thumb-up.png" style={{ width: "20px", height: "20px" }} />
+      <Typography
+        style={{
+          fontSize: "15px",
+          fontWeight: 500,
+          marginLeft: "10px",
+          color: "#4285F4",
+          textTransform:"capitalize"
+        }}
+      >
+        Like
+      </Typography>
+    </div>
+  ),
+  LOVE: (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <img src="/icons/love.png" style={{ width: "20px", height: "20px" }} />
+      <Typography
+        style={{
+          fontSize: "15px",
+          fontWeight: 500,
+          marginLeft: "10px",
+          color: "#e03251",
+          textTransform:"capitalize"
+        }}
+      >
+        Love
+      </Typography>
+    </div>
+  ),
+  HAHA: (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <img src="/icons/laughing.png" style={{ width: "20px", height: "20px" }} />
+      <Typography
+        style={{
+          fontSize: "15px",
+          fontWeight: 500,
+          marginLeft: "10px",
+          color: "#ecb10f",
+          textTransform:"capitalize"
+        }}
+      >
+        HaHa
+      </Typography>
+    </div>
+  ),
+  WOW: (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <img src="/icons/wow.png" style={{ width: "20px", height: "20px" }} />
+      <Typography
+        style={{
+          fontSize: "15px",
+          fontWeight: 500,
+          marginLeft: "10px",
+          color: "#ecb10f",
+          textTransform:"capitalize"
+        }}
+      >
+        Wow
+      </Typography>
+    </div>
+  ),
+
+  SAD: (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <img src="/icons/sad.png" style={{ width: "20px", height: "20px" }} />
+      <Typography
+        style={{
+          fontSize: "15px",
+          fontWeight: 500,
+          marginLeft: "10px",
+          color: "#ecb10f",
+          textTransform:"capitalize"
+        }}
+      >
+        Sad
+      </Typography>
+    </div>
+  ),
+  ANGRY: (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <img src="/icons/angry.png" style={{ width: "20px", height: "20px" }} />
+      <Typography
+        style={{
+          fontSize: "15px",
+          fontWeight: 500,
+          marginLeft: "10px",
+          color: "#f3573c",
+          textTransform:"capitalize"
+        }}
+      >
+        Angry
+      </Typography>
+    </div>
+  ),
+};
+
+const Post = ({ item, addComment, user, addPostReaction, posts, looping }) => {
   const classes = useStyles();
   const matches = useMediaQuery("(max-width:360px)");
-  const [open, setOpen] = React.useState(false);
+  const [value, setValue] = React.useState("");
   const [relaventAnchor, setRelaventAnchor] = React.useState(false);
+  const [data, setData] = React.useState([]);
+  const [commentFilter, setCommentFilter] = React.useState("Most Recent");
+  const [loading, setLoading] = React.useState(true);
+  const [reaction, setReaction] = React.useState("Like");
+  const [totalReaction, setTotalReaction] = React.useState(0);
+  const [totalComment, setTotalComment] = React.useState(0);
+  const [openCommentBox, setOpenCommentBox] = React.useState(false);
 
-  const [commentFilter,setCommentFilter] = React.useState("Most Recent")
+  React.useEffect(() => {
+    setData(item);
+    setReaction(reactionFilter(item.post.reactions, user.user_id) ? reactionFilter(item.post.reactions, user.user_id) : "Like");
+    setTotalReaction(item.post.total_reaction);
+    setTotalComment(item.post.total_comment);
+  }, []);
 
-
-  const postReactionTooltipIcon = [
-    { icon: <ThumbUpSharp className={classes.iconDesign} /> },
-    { icon: <Favorite className={classes.iconDesign} style={{backgroundColor:"#e03251"}}/> },
-    { icon: <EmojiEmotionsSharp className={classes.iconDesign} style={{backgroundColor:"#ffbb00"}}/> },
-    { icon: <MoodBad className={classes.iconDesign} style={{backgroundColor:"#ffbb00",color:"#000"}}/> },
-  ];
+  React.useEffect(() => {
+    posts.map((i) => {
+      if (item.post.id === i.post.id) {
+        setTimeout(() => {
+          setData(i);
+          setLoading(false);
+        }, 100);
+      }
+    });
+  }, [posts]);
 
   const handleOpenRelavent = (e) => {
-    setRelaventAnchor(e.currentTarget)
+    setRelaventAnchor(e.currentTarget);
+  };
+
+  const handleClickReaction = () => {
+    if (reaction !== "Like" && reaction == "") {
+      setReaction("LIKE");
+      setTotalReaction(totalReaction + 1);
+      addPostReaction({
+        user_id: user.user_id,
+        post_id: data.post.id,
+        type: "LIKE",
+      });
+    } else if (reaction !== "Like") {
+      setReaction("Like");
+      setTotalReaction(totalReaction - 1);
+      addPostReaction({
+        user_id: user.user_id,
+        post_id: data.post.id,
+        type: reaction,
+      });
+    } else if (reaction === "Like") {
+      setReaction("LIKE");
+      setTotalReaction(totalReaction + 1);
+      addPostReaction({
+        user_id: user.user_id,
+        post_id: data.post.id,
+        type: "LIKE",
+      });
+    }
   };
 
   const handleCloseRelavent = (val) => {
-    setRelaventAnchor(null)
-    setCommentFilter(val)
+    setRelaventAnchor(null);
+    setCommentFilter(val);
   };
 
+  const handleAddComment = (id) => {
+    var elem = document.getElementById(`${id}`);
+    elem.onkeypress = function (e) {
+      if (e.key === "Enter" && !e.shiftKey && value.trim().length > 0) {
+        e.preventDefault();
+        setTotalComment(totalComment + 1);
+        addComment({
+          text: value,
+          post_id: data.post.id,
+          user_id: user.user_id,
+          profile_photo: user.profile_photo,
+          name: user.name,
+          id: uuidv4(),
+        });
+        setValue("");
+      }
+    };
+  };
+
+  const handlePostReaction = (type) => {
+    if (type == reaction) {
+      setReaction("Like");
+      setTotalReaction(totalReaction - 1);
+    } else if (reaction == "" || reaction == "Like") {
+      setReaction(type);
+      setTotalReaction(totalReaction + 1);
+    } else {
+      setReaction(type);
+      setTotalReaction(totalReaction);
+    }
+
+    addPostReaction({
+      user_id: user.user_id,
+      post_id: data.post.id,
+      type: type,
+    });
+  };
   return (
-    <>
-      <Card className={classes.root}>
-        <CardContent>
-          <div className={classes.postHeader}>
-            <img
-              src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.AyVv06KRxDIdsjyaJeD34QAAAA%26pid%3DApi&f=1"
-              width="36px"
-              height="36px"
-              className={classes.image}
-            />
-            <div className={classes.postInfo}>
-              <Typography className={classes.postUser}>Star Sports</Typography>
-              <div className={classes.postTimeSection}>
-                <Typography className={classes.postTime}>16 hours</Typography>
-                <Public size="small" className={classes.postTimeIcon} />
-              </div>
-            </div>
-            <IconButton size="small" className={classes.postHeaderHoriz}>
-              <MoreHoriz />
-            </IconButton>
-          </div>
-          <Typography className={classes.postText}>
-            {data.post.text}
-          </Typography>
-          <div className={classes.postReviewSection}>
-            <div className={classes.postReviewLeft}>
-              {postReviewIcon.map((item,id) => (
-                <Tooltip
-                key={item.title+id}
-                  title={item.title}
-                  classes={{ tooltip: classes.customWidth1 }}
-                  placement="bottom"
-                >
-                  {item.icon}
-                </Tooltip>
-              ))}
-              <Tooltip
-                title="total"
-                classes={{ tooltip: classes.customWidth1 }}
-                placement="bottom"
-              >
-                <Typography
+    <div>
+      {loading ? (
+        <LOADING />
+      ) : (
+        <div>
+          <Card className={classes.root}>
+            <CardContent>
+              <div className={classes.postHeader}>
+                <img
+                  src={data.post.profile_photo}
+                  width="36px"
+                  height="36px"
                   style={{
-                    fontSize: "15px",
-                    fontWeight: "300",
-                    marginLeft: "2.5px",
+                    borderRadius: "50px",
                   }}
-                >
-                  24k
-                </Typography>
-              </Tooltip>
-            </div>
-            <div className={classes.postReviewRight}>
-              <div
-                style={{
-                  fontSize: "15px",
-                  fontWeight: "300",
-                  marginRight: "7.5px",
-                  textTransform: "capitalize",
-                }}
-              >
-                <div style={{ display: "flex" }}>
-                  534
-                  <span
-                    style={{
-                      display: matches ? "none" : "block",
-                      marginLeft: "5px",
-                    }}
-                  >
-                    Comments
-                  </span>
-                  <ChatBubbleOutline
-                    size="small"
-                    style={{
-                      marginLeft: "5px",
-                      display: matches ? "block" : "none",
-                    }}
-                  />
+                />
+                <div className={classes.postInfo}>
+                  <Typography className={classes.postUser}>
+                    {data.post.name}
+                  </Typography>
+                  <div className={classes.postTimeSection}>
+                    <Typography className={classes.postTime}>
+                      {moment(data.post.created_at).fromNow()}
+                    </Typography>
+                    <Public size="small" className={classes.postTimeIcon} />
+                  </div>
                 </div>
+                <IconButton size="small" className={classes.postHeaderHoriz}>
+                  <MoreHoriz />
+                </IconButton>
               </div>
-              <div
-                style={{
-                  fontSize: "15px",
-                  fontWeight: "300",
-                  textTransform: "capitalize",
-                }}
-              >
-                <div style={{ display: "flex" }}>
-                  104
-                  <span
-                    style={{
-                      display: matches ? "none" : "block",
-                      marginLeft: "5px",
-                    }}
-                  >
-                    Shares
-                  </span>
-                  <ReplyOutlined
-                    size="small"
-                    style={{
-                      marginLeft: "5px",
-                      display: matches ? "block" : "none",
-                      transform: "rotate(90deg)",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <Divider style={{ marginTop: "20px" }} />
-
-          <div className={classes.postReactionSection}>
-            <Tooltip
-              interactive
-              title={
-                <div className={classes.postReactionTooltips}>
-                  {postReactionTooltipIcon.map((item,id) => (
-                    <span key={id} onClick={() => alert("log............")}>
-                      {item.icon}
-                    </span>
-                  ))}
-                </div>
-              }
-              classes={{ tooltip: classes.customWidth2 }}
-              placement="top"
-            >
-              <Button
-                style={{
-                  padding: "7.5px 30px",
-                }}
-              >
-                <ThumbUpOutlined size="small" style={{ marginRight: "10px" }} />
-                <Typography
-                  className={classes.postReactionTitle}
-                  style={{
-                    display: matches ? "none" : "block",
-                  }}
-                >
-                  Like
-                </Typography>
-              </Button>
-            </Tooltip>
-            {buttons.map((item) => (
-              <Button
-                key={item.title}
-                style={{
-                  padding: "7.5px 30px",
-                }}
-              >
-                {item.icon}
-
-                <Typography
-                  className={classes.postReactionTitle}
-                  style={{
-                    display: matches ? "none" : "block",
-                  }}
-                >
-                  {item.title}
-                </Typography>
-              </Button>
-            ))}
-          </div>
-          <Divider style={{ marginBottom: "20px" }} />
-          <div className={classes.postCommentSection}>
-            <div className={classes.postCommentFilter}
-              onClick={handleOpenRelavent}
-            >
-              <Typography className={classes.postCommentFilterTitle}>
-                {commentFilter}
+              <Typography className={classes.postText}>
+                {data.post.text}
               </Typography>
-              <ArrowDropDown size="small" />
-            </div>
-            <div className={classes.postInputSection}>
-              <img
-                src="https://cdn.iconscout.com/icon/free/png-256/avatar-367-456319.png"
-                width="40px"
-                height="40px"
-              />
-              <InputBase
-                placeholder="Write a comment..."
-                multiline
-                className={classes.postInput}
-                endAdornment={
-                  <div style={{ display: "flex" }}>
-                    {postIconButton.map((item,id) => (
+
+              <Grid container>
+                <Grid item xs={6}>
+                  <div
+                    className={classes.postReviewLeft}
+                    style={{ display: totalReaction > 0 ? "flex" : "none" }}
+                  >
+                    {postReviewIcon.map((item, id) => (
                       <Tooltip
-                      key={item.title + id}
+                        key={item.title + id}
                         title={item.title}
-                        classes={{ tooltip: classes.customWidth }}
-                        placement="top"
+                        classes={{ tooltip: classes.customWidth1 }}
+                        placement="bottom"
                       >
-                        <IconButton size="small">{item.icon}</IconButton>
+                      {reactionIconList[Math.floor((Math.random() * 5) + 1)]}
                       </Tooltip>
                     ))}
+                    <Tooltip
+                      title="total"
+                      classes={{ tooltip: classes.customWidth1 }}
+                      placement="bottom"
+                    >
+                      <Typography
+                        style={{
+                          fontSize: "15px",
+                          fontWeight: "300",
+                          marginLeft: "2.5px",
+                        }}
+                      >
+                        {totalReaction}
+                      </Typography>
+                    </Tooltip>
                   </div>
-                }
-              />
-            </div>
-          </div>
-          <div>
-            {data.comments.map((comment,id) => (
-              <Comment
-                key={comment.text}
-                name={comment.name}
-                text={comment.text}
-                subComments={comment.subComments}
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      <RelaventMenu relaventAnchor={relaventAnchor} handleCloseRelavent={handleCloseRelavent}/>
-    </>
+                </Grid>
+                <Grid xs={6} item container justify="flex-end">
+                  <div className={classes.postReviewRight}>
+                    <div
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: "300",
+                        marginRight: "7.5px",
+                        textTransform: "capitalize",
+                        display: totalComment > 0 ? "flex" : "none",
+                      }}
+                    >
+                      <div style={{ display: "flex" }}>
+                        {totalComment}
+                        <span
+                          style={{
+                            display: matches ? "none" : "block",
+                            marginLeft: "5px",
+                          }}
+                        >
+                          Comments
+                        </span>
+                        <ChatBubbleOutline
+                          size="small"
+                          style={{
+                            marginLeft: "5px",
+                            display: matches ? "block" : "none",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: "300",
+                        textTransform: "capitalize",
+                        display: totalReaction > 0 ? "block" : "none",
+                      }}
+                    >
+                      <div style={{ display: "flex" }}>
+                        {totalReaction}
+                        <span
+                          style={{
+                            display: matches ? "flex" : "block",
+                            marginLeft: "5px",
+                          }}
+                        >
+                          Shares
+                        </span>
+                        <ReplyOutlined
+                          size="small"
+                          style={{
+                            marginLeft: "5px",
+                            display: matches ? "block" : "none",
+                            transform: "rotate(90deg)",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Grid>
+              </Grid>
+
+              <Divider style={{ marginTop: "20px" }} />
+
+              <div className={classes.postReactionSection}>
+                <Tooltip
+                  interactive
+                  title={
+                    <div
+                      className={classes.postReactionTooltips}
+                      id={data.post.id}
+                    >
+                      {postReactionTooltipIcon.map((item, id) => (
+                        <span
+                          key={id}
+                          onClick={() => handlePostReaction(item.title)}
+                        >
+                          {item.icon}
+                        </span>
+                      ))}
+                    </div>
+                  }
+                  classes={{ tooltip: classes.customWidth2 }}
+                  placement="top"
+                >
+                  <Button
+                    onClick={handleClickReaction}
+                    style={{
+                      display: "flex",
+                      alignLtems: "center",
+                      padding: "7.5px 30px",
+                    }}
+                  >
+                    {reactionList[reaction]}
+                    {/* <img src="/like.png"
+                      style={{
+                        width:"20px",
+                        height:"20px",
+                        marginRight:"10px"
+
+                      }}
+                    />
+                    <Typography
+                      className={classes.postReactionTitle}
+                      style={{
+                        display: matches ? "none" : "block",
+                      }}
+                    >
+                      {reaction == "" ? "Like" : reaction}
+                    </Typography> */}
+                  </Button>
+                </Tooltip>
+                {/* {buttons.map((item) => ( */}
+                <Button
+                  key={item.title}
+                  style={{
+                    padding: "7.5px 30px",
+                  }}
+                  onClick={() => setOpenCommentBox(!openCommentBox)}
+                >
+                  <ChatBubbleOutline
+                    size="small"
+                    style={{ marginRight: "10px" }}
+                  />
+                  <Typography
+                    className={classes.postReactionTitle}
+                    style={{
+                      display: matches ? "none" : "block",
+                    }}
+                  >
+                    Comment
+                  </Typography>
+                </Button>
+                {/* ))} */}
+                <Button
+                  key={item.title}
+                  style={{
+                    padding: "7.5px 30px",
+                  }}
+                  // onClick={() => setOpenCommentBox(!openCommentBox)}
+                >
+                  <ReplyOutlined
+                    size="small"
+                    style={{ marginRight: "10px", transform: "rotate(90deg)" }}
+                  />
+                  <Typography
+                    className={classes.postReactionTitle}
+                    style={{
+                      display: matches ? "none" : "block",
+                    }}
+                  >
+                    Share
+                  </Typography>
+                </Button>
+              </div>
+              <Divider style={{ marginBottom: "10px" }} />
+              <div
+                className={classes.postCommentSection}
+                style={{ display: openCommentBox ? "flex" : "none" }}
+              >
+                <div className={classes.postCommentFilter}>
+                  <Typography
+                    className={classes.postCommentFilterTitle}
+                    onClick={handleOpenRelavent}
+                  >
+                    {commentFilter}
+                    <ArrowDropDown size="small" />
+                  </Typography>
+                </div>
+                <div className={classes.postInputSection}>
+                  <img
+                    src={user.profile_photo}
+                    width="40px"
+                    height="40px"
+                    style={{
+                      borderRadius: "50px",
+                    }}
+                  />
+                  <InputBase
+                    placeholder="Write a comment..."
+                    onKeyDown={() => handleAddComment(data.post.id)}
+                    id={data.post.id}
+                    multiline
+                    onChange={(e) => setValue(e.target.value)}
+                    value={value}
+                    className={classes.postInput}
+                    endAdornment={
+                      <div style={{ display: "flex" }}>
+                        {postIconButton.map((item, id) => (
+                          <Tooltip
+                            key={item.title + id}
+                            title={item.title}
+                            classes={{ tooltip: classes.customWidth }}
+                            placement="top"
+                          >
+                            <IconButton size="small">{item.icon}</IconButton>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    }
+                  />
+                </div>
+              </div>
+              <div style={{ display: openCommentBox ? "block" : "none" }}>
+                {data.comments.map((comment, id) => (
+                  <Comment
+                    key={comment.id}
+                    comment_id={comment.id}
+                    name={comment.name}
+                    text={comment.text}
+                    profile_photo={comment.profile_photo}
+                    subComments={comment.subComments}
+                    created_at={comment.created_at}
+                    post_id={data.post.id}
+                  />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <RelaventMenu
+            relaventAnchor={relaventAnchor}
+            handleCloseRelavent={handleCloseRelavent}
+          />
+        </div>
+      )}
+    </div>
   );
-}
+};
+
+const mapStateToProps = (state) => {
+  return {
+    user: state.auth.user,
+    looping: state.auth.loading,
+    posts: state.posts.posts,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    addComment: (data) => dispatch(addComment(data)),
+    addPostReaction: (data) => dispatch(addPostReaction(data)),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Post);

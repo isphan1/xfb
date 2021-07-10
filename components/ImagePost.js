@@ -75,6 +75,10 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "15px",
     fontWeight: "bold",
   },
+  postImage:{
+    width:"100%",
+    height:"240px"
+  },
   postTimeSection: {
     display: "flex",
     alignItems: "center",
@@ -426,7 +430,7 @@ export default function ImagePost({ data }) {
             </div>
           </div>
           <Divider style={{ marginTop: "20px" }} />
-                    <img src="/w.jpg" width="1000px" height="400px"/>
+                    <img src="/w.jpg" className={classes.postImage}/>
           <div className={classes.postReactionSection}>
             <Tooltip
               interactive

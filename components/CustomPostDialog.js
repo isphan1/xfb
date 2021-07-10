@@ -1,4 +1,5 @@
 import React from "react";
+import { v4 as uuidv4 } from "uuid";
 import {
   Dialog,
   DialogTitle,
@@ -163,7 +164,7 @@ const addIcons = [
 export default function CustomPostDialog(props) {
   const classes = useStyles();
 
-  const { open, handlePostDialogClose } = props;
+  const { open, handlePostDialogClose,addPost,user } = props;
 
   const matchXs = useMediaQuery("(min-width:600px)")
 
@@ -177,6 +178,14 @@ export default function CustomPostDialog(props) {
     setValue("")
     setBox(false)
   };
+
+const handleAddPost = () =>{
+  addPost({'text':value,"user_id":user.user_id,'name':user.name,'profile_photo':user.profile_photo,'id':uuidv4()})
+  handlePostDialogClose();
+  setColor("#ffffff");
+  setValue("")
+  setBox(false)
+}
 
   const colors = [
     { color: "#ffffff" },
@@ -333,6 +342,7 @@ export default function CustomPostDialog(props) {
             variant="contained"
             disabled={value.length <= 0}
             className={classes.postButton}
+            onClick={handleAddPost}
           >
             post
           </Button>

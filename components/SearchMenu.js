@@ -1,5 +1,4 @@
 import React from "react";
-
 import {
   Menu,
   MenuItem,
@@ -10,15 +9,18 @@ import {
   InputBase,
 } from "@material-ui/core";
 import { Close, Search, KeyboardBackspace } from "@material-ui/icons";
-export default function SearchMenu(props) {
+import { connect } from "react-redux";
+import axiosInstance from "./axios";
+import Cookie from 'js-cookie'
+const SearchMenu = (props) =>{
   const useStyles = makeStyles((theme) => ({
     menuDesign: {
       zIndex: "9999",
       "& .MuiMenu-paper": {
         width: "300px",
-        minHeight: "280px",
-        maxHeight: "490px",
-        overflow: "hidden",
+        // minHeight: "280px",
+        maxHeight: "400px",
+        overflow: "scroll",
         borderRadius: "5px",
       },
       "& .MuiPaper-root": {
@@ -40,9 +42,28 @@ export default function SearchMenu(props) {
     },
   }));
 
-  const { searchAnchor, handleCloseSearch, search, setSearch } = props;
+  const { searchAnchor, handleCloseSearch,search,setSearch,results,setResults } = props;
 
   const classes = useStyles();
+
+  React.useEffect(() => {
+    if(search.length > 0){
+    axiosInstance({
+      method:"post",
+      url:`search/`,
+      data:{'search':search},
+      headers:{
+          "Authorization": "JWT "+ Cookie.get("access_token")
+      }    
+  }).then(res=>
+      setResults(res.data)
+      )
+    .catch(err=>
+      console.log(err)
+      )
+    }
+  }, [search])
+
   return (
     <Menu
       className={classes.menuDesign}
@@ -68,6 +89,7 @@ export default function SearchMenu(props) {
           <KeyboardBackspace />
         </IconButton>
         <InputBase
+          autoComplete="off"
           id="ab"
           style={{
             borderRadius: "30px",
@@ -75,7 +97,7 @@ export default function SearchMenu(props) {
             padding: "1.5px 10px",
           }}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={e => setSearch(e.target.value.trim())}
           placeholder="Search Facebook"
         />
       </div>
@@ -96,13 +118,18 @@ export default function SearchMenu(props) {
         </Typography>
       </div>
       <Divider style={{ margin: "10px 0" }} />
-      {["Dr. Muhammad Saifullah", "Muttakin Wara", "AbuBakar Mohammad Zakaria", 
-      "Dr. Mufti Imam Hossain", "As Sunnah Complex"]
-      .map((item) => (
-        <div key={item} className={classes.menuItem}>
+      {
+        results.length <= 0 ?
+      
+        <Typography style={{display:"flex",justifyContent:"center",
+      alignItems:"center"
+      }}>Nothing Found</Typography>
+      :
+      results.map((item) => (
+        <div key={item.id} className={classes.menuItem}>
           <div style={{ display: "flex", alignItems: "center"}}>
             <img
-              src="/a.png"
+              src={item.profile_photo}
               width="40px"
               height="40px"
               style={{ borderRadius: "50px" }}
@@ -114,7 +141,7 @@ export default function SearchMenu(props) {
                 marginLeft: "10px",
               }}
             >
-              {item}
+              {item.name}
             </Typography>
           </div>
           <div>
@@ -127,3 +154,5 @@ export default function SearchMenu(props) {
     </Menu>
   );
 }
+
+export default SearchMenu

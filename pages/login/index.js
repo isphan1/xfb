@@ -101,10 +101,16 @@ const index = (props) => {
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
 
-  const handleLogin = async (e) => {
+  const handleLoginClick = async (e) => {
     e.preventDefault();
-    props.login({username:username,password:password})
-  };
+    await props.login({username:username,password:password})
+};
+
+const handleLoginPress = async (e) => {
+  if(e.key === 'Enter'){
+  await props.login({username:username,password:password})
+}
+};
 
   return (
     <div className={classes.root}>
@@ -121,7 +127,9 @@ const index = (props) => {
       </div>
       <div>
         <Paper className={classes.paper}>
-          <form autoComplete="off">
+          <form autoComplete="off" 
+            onKeyDown={handleLoginPress}
+          >
             <InputBase
               placeholder="Email address or phone number"
               value={username}
@@ -142,7 +150,7 @@ const index = (props) => {
             <Button
               variant="contained"
               className={classes.submit}
-              onClick={handleLogin}
+              onClick={handleLoginClick}
             >
               Log In
             </Button>

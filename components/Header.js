@@ -31,6 +31,8 @@ import {
   useMediaQuery,
 } from "@material-ui/core";
 import { useRouter } from "next/router";
+import { connect } from "react-redux";
+import { setTabValue } from "../redux/auth/action";
 const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
@@ -156,7 +158,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Header() {
+const Header = (props) =>{
   const classes = useStyles();
   const router = useRouter();
   const username = "kamal";
@@ -191,9 +193,12 @@ export default function Header() {
   const [messangerAnchor, setMessangerAnchor] = React.useState(null);
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
   const [accountAnchor, setAccountAnchor] = React.useState(null);
-  const [active, setActive] = React.useState("Home");
+  const [active, setActive] = React.useState("");
+  const [results,setResults] = React.useState([])
 
   const matches = useMediaQuery("(min-width:1120px)");
+
+  const matches1 = useMediaQuery("(max-width:1275px)");
 
   const handleOpenSearch = (e) => {
     setSearchAnchor(e.currentTarget);
@@ -205,6 +210,7 @@ export default function Header() {
   const handleCloseSearch = () => {
     setSearchAnchor(null);
     setSearch("");
+    setResults([])
   };
 
   const handleOpenCreate = (e) => {
@@ -240,10 +246,20 @@ export default function Header() {
   };
 
   const addActiveClass = (val) => {
-    setActive(val.title);
+    props.setTabValue({'tab':val.title})
+    setActive(props.tabValue);
     router.push(`/${val.href}`)
     // console.log(val.title, active);
   };
+
+
+  React.useEffect(() => {
+    setActive(props.tabValue);
+  }, [])
+
+  React.useEffect(() => {
+    setActive(props.tabValue);
+  }, [props.tabValue])
 
   const toolTipIcon = [
     { icon: <Add />, title: "Create", func: handleOpenCreate },
@@ -279,7 +295,7 @@ export default function Header() {
             <Grid
               item
               sm={2}
-              md={3}
+              md={matches1 ? 2 : 3}
               xs={6}
               container
               alignItems="center"
@@ -292,7 +308,7 @@ export default function Header() {
               <div
                 onClick={handleOpenSearch}
                 className={classes.searchInput1}
-                style={{ display: matches ? "flex" : "none" }}
+                style={{ display: matches1 ? "none" : "flex" }}
               >
                 <Search fontSize="small" style={{ margin: "0 5px" }} />
                 Search Facebook
@@ -301,7 +317,7 @@ export default function Header() {
                 onClick={handleOpenSearch}
                 className={classes.searchInputIcon}
                 style={{
-                  display: matches ? "none" : "flex",
+                  display: matches1 ? "flex" : "none",
                 }}
                 size="small"
               >
@@ -309,7 +325,7 @@ export default function Header() {
               </IconButton>
             </Grid>
             <Hidden xsDown>
-              <Grid item sm={9} md={5} className={classes.buttonTabs}>
+              <Grid item sm={9} md={matches1 ? 8 : 5} className={classes.buttonTabs}>
                 {tabs.map((item) => (
                   // <Link key={item.title} href={`/${item.href}`}>
                     <Tooltip
@@ -331,18 +347,18 @@ export default function Header() {
                 ))}
               </Grid>
             </Hidden>
-            <Grid item sm={1} md={4} xs={6} style={{ textAlign: "end" }}>
-              <Hidden mdUp>
-                <Link
+            <Grid item sm={1} md={matches1 ? 2 : 4} xs={6} style={{ textAlign: "end" }}>
+              <Hidden lgUp>
+                {/* <Link
                   href="/user/[username]/settings"
                   as={`/user/${username}/settings`}
-                >
-                  <IconButton edge="start">
+                > */}
+                  <IconButton edge="start" onClick={(e)=>handleOpenAccount(e)}>
                     <MenuIcon />
                   </IconButton>
-                </Link>
+                {/* </Link> */}
               </Hidden>
-              <Hidden smDown>
+              <Hidden mdDown>
                 <Link href="/about">
                   <Button
                     style={{
@@ -352,14 +368,15 @@ export default function Header() {
                     }}
                   >
                     <img
-                      src="https://cdn.iconscout.com/icon/free/png-256/avatar-367-456319.png"
+                      src={props.auth.profile_photo}
                       width="30px"
                       height="30px"
                       style={{
+                        borderRadius:"40px",
                         marginRight: "5px",
                       }}
                     />
-                    Abu
+                    {props.auth.name}
                   </Button>
                 </Link>
                 {toolTipIcon.map((item) => (
@@ -391,10 +408,13 @@ export default function Header() {
         handleCloseSearch={handleCloseSearch}
         search={search}
         setSearch={setSearch}
+        results={results}
+        setResults={setResults}
       />
       <AccountMenu
         accountAnchor={accountAnchor}
         handleCloseAccount={handleCloseAccount}
+        user={props.auth}
       />
       <NotificationMenu
         notificationAnchor={notificationAnchor}
@@ -411,3 +431,19 @@ export default function Header() {
     </div>
   );
 }
+
+
+const mapStateToProps = (state) => {
+  return {
+    auth: state.auth.user,
+    tabValue:state.auth.currentTab
+  };
+};
+
+const mapDispatchToProps = dispatch =>{
+  return{
+    setTabValue: (data) => dispatch(setTabValue(data)),
+  }
+}
+
+export default connect(mapStateToProps,mapDispatchToProps)(Header)

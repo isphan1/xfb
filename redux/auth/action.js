@@ -1,6 +1,7 @@
 import { SINGIN, SINGUP, LOGOUT, ERRORS, USERNAME } from "./type";
 import axios from "axios";
 // import { tokenConfig } from '../common/getToken'
+import Cookie from "js-cookie";
 import Cookies from "js-cookie";
 import axiosInstance from "../../components/axios";
 
@@ -68,6 +69,10 @@ export const uInvalid = (data) => (dispatch) => {
 };
 
 export const uSingIn = (data) => (dispatch) => {
+
+  dispatch({
+    type:'LOADING',
+  })
   axiosInstance({
       method:"post",
       url:`token/`,
@@ -82,7 +87,10 @@ export const uSingIn = (data) => (dispatch) => {
               Cookies.set('refresh_token',res.data.refresh)
           dispatch({
               type:SINGIN,
-              payload:data.username
+              payload:{'username':res.data.username,'user_id':res.data.user_id,
+            'profile_photo':res.data.profile_photo,'cover_photo':res.data.cover_photo,
+            'name':res.data.name
+            }
           })
       }
       )
@@ -121,8 +129,8 @@ export const uSingUp = (data) => (dispatch) => {
 };
 
 export const uLogout = (dispatch) => {
-  Cookies.remove("auth");
-  // Cookies.remove("expires");
+  Cookies.remove("access_token");
+  Cookies.remove("refresh_token");
   dispatch({
     type: LOGOUT,
   });
@@ -170,3 +178,69 @@ export const tokenFresh = (token) => (dispatch) => {
       // })
     });
 };
+
+export const setTabValue = (data) => (dispatch) =>{
+  dispatch({
+    type:"CURRENT_TAB",
+    payload:data
+  })
+}
+
+export const allMessages = (data) => dispatch =>{
+  axiosInstance({
+    method:"post",
+    url: `message/`,
+    data: { sender: data.sender, receiver: data.receiver },
+    headers:{
+        "Authorization": "JWT "+ Cookie.get("access_token")
+    }
+}).then(res=>{
+  dispatch({
+      type:"MESSAGES",
+      payload:res.data
+  })
+}).catch(err=>{
+    console.log(err)
+}) 
+}
+
+export const addMessage = (data) => dispatch =>{
+
+//   dispatch({
+//     type:"ADD_MESSAGE",
+//     payload:{
+//       id:data.id,
+//       text:data.text,
+//       created_at:new Date(),
+//       user:{
+//         id:"u1",
+//         name:data.sender
+//       }
+//     }
+// })
+
+  axiosInstance({
+    method:"post",
+    url: `addmessage/`,
+    data: { sender: data.sender, receiver: data.receiver, text:data.text, id:data.id },
+    headers:{
+        "Authorization": "JWT "+ Cookie.get("access_token")
+    }
+}).then(res=>{
+  dispatch({
+      type:"ADD_MESSAGE",
+      payload:{
+        id:data.id,
+        text:data.text,
+        created_at:new Date(),
+        user:{
+          id:"u1",
+          name:data.sender
+        }
+      }
+  })
+}).catch(err=>{
+    console.log(err)
+}) 
+
+}

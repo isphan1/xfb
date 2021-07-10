@@ -24,13 +24,13 @@ const useStyles= makeStyles(theme=>({
         padding:"5px",
         cursor:"pointer",
         "&:hover":{
-          backgroundColor:"#ccc",
+          backgroundColor:"#e8e2e2",
           borderRadius:"5px"
         }
       },
       menuTitle:{fontSize:"15px",fontWeight:"400"},
       menuSubTitle:{
-        fontSize:"13px",fontWeight:"300",color:"#8e8b8b"
+        fontSize:"13px",fontWeight:"300",color:"#332f2f"
       }
 }))
 

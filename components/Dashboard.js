@@ -36,19 +36,23 @@ import {
   ChatBubbleOutline,
   ThumbUpOutlined,
   ReplyOutlined,
+  MessageSharp
 } from "@material-ui/icons";
 import Post from "../components/Post";
 import CustomPostDialog from "../components/CustomPostDialog";
 import axios from "axios";
 import Cookie from "js-cookie";
 import Layout1 from "./Layout1";
+import { addPost, allFriends, allPosts, friendRequests, myFriends } from "../redux/post/action";
+import LOADING from "../common/Loading";
+import MessageBox from "./MessageBox";
 
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
   root: {
     padding: "20px",
-    backgroundColor: "#e9ebee",
+    backgroundColor: "#f5f5f7",
     "@media (max-width: 510px)": {
       padding: "20px 0",
     },
@@ -121,7 +125,7 @@ const useStyles = makeStyles((theme) => ({
   storyBoxSlideImage: {
     position: "absolute",
     background: "#e9ebee",
-    zIndex: "1300",
+    zIndex: "1200",
     height: "40px",
     width: "40px",
     border: "4px solid #0068c8",
@@ -153,6 +157,7 @@ const useStyles = makeStyles((theme) => ({
     position: "absolute",
     background: "#fff",
     height: "50px",
+    border:"1px solid #efe9e9",
     width: "50px",
     borderRadius: "50%",
     top: "38%",
@@ -183,8 +188,7 @@ const useStyles = makeStyles((theme) => ({
   postBox: {
     marginTop: "20px",
     "& .MuiCardContent-root:last-child": {
-      padding: "10px 0",
-      paddingBottom: "10px",
+      padding: "15px 0 10px 0",
     },
   },
   createRoom: {
@@ -204,7 +208,7 @@ const useStyles = makeStyles((theme) => ({
   },
   drawerPaper: {
     width: drawerWidth,
-    backgroundColor: "#e9ebee",
+    backgroundColor: "#f5f5f7",
     border: "none",
   },
   drawerContainer: {
@@ -233,8 +237,7 @@ const postbuttons = [
 const story = [
   {
     icon: "https://www.pngkit.com/png/full/115-1150342_user-avatar-icon-iconos-de-mujeres-a-color.png",
-    image:
-      "https://www.fujifilm.com/products/digital_cameras/x/fujifilm_x70/sample_images/img/index/ff_x70_001.JPG",
+    image: "https://www.nydailynews.com/resizer/CEEJYohg9VZAqlqB4WEg0wTz4LA=/1200x0/top/arc-anglerfish-arc2-prod-tronc.s3.amazonaws.com/public/TAU2JU73A5HNVJO7IPO5J3XJOU.jpg",
     title: "ICC World Cricket",
   },
   {
@@ -264,9 +267,10 @@ const Dashboard = (props) => {
   const matches2 = useMediaQuery("(max-width:710px)");
   const matches3 = useMediaQuery("(max-width:410px)");
 
-  const [posts, setPosts] = React.useState([]);
-
   const [open, setOpen] = React.useState(false);
+  const [posts, setPosts] = React.useState([]);
+  const [openMessageEl,setOpenMessageEl] = React.useState(false)
+  const [messageUser,setMessageUser] = React.useState({})
 
   const handlePostDialogOpen = () => {
     setOpen(true);
@@ -276,16 +280,24 @@ const Dashboard = (props) => {
     setOpen(false);
   };
 
-  React.useEffect(async () => {
-    axiosInstance({
-      method: "post",
-      url: `posts/`,
-      data:{"username":props.auth.username},
-      headers:{
-        "Authorization": "JWT " + Cookie.get("access_token")
-      }
-    }).then((res) => setPosts(res.data));
+  React.useEffect(() => {
+    props.allPosts({"username":props.auth.username})
+    props.myFriends({ user_id: props.auth.user.user_id });
   }, []);
+  
+
+  React.useEffect(() => {
+    setPosts(props.posts.posts)
+  }, [props.posts.posts]);
+
+
+  const handleOpenMessageBox = (user) => {
+    setOpenMessageEl(true)
+    setMessageUser(user);
+
+  };
+
+  
 
   return (
     <Layout1>
@@ -312,10 +324,28 @@ const Dashboard = (props) => {
             </div>
           </Drawer>
 
-          <main style={{ flexGrow: 1 }}>
-            {/* <Grid item sm={2} style={{ minHeight: "92.4vh" }}>
-          <SideNav />
-          </Grid> */}
+          <main style={{ flexGrow: 1,position:"relative" }}>
+
+          <div 
+          // onClick={handleOpenMessageEl}
+          style={{
+            position:"fixed",
+            cursor:"pointer",
+            top:"85vh",
+            right:"30px",
+            border:"1px solid #ccc",
+            zIndex:"1500",
+            width:"50px",
+            height:"50px",
+            backgroundColor:"#fff",
+            borderRadius:"50px",
+            display:"flex",
+            justifyContent:"center",
+            alignItems:"center",
+          }}
+          >
+            <MessageSharp />
+          </div>
             <div className={classes.story}>
               <IconButton className={classes.floatButton}>
                 <KeyboardBackspace
@@ -408,15 +438,18 @@ const Dashboard = (props) => {
                     }}
                   >
                     <img
-                      src="https://cdn.iconscout.com/icon/free/png-256/avatar-367-456319.png"
+                      src={props.auth.user.profile_photo}
                       width="40px"
                       height="40px"
+                      style={{
+                        borderRadius:"50px"
+                      }}
                     />
                     <div
                       onClick={handlePostDialogOpen}
                       style={{
                         marginLeft: "5px",
-                        backgroundColor: "#e9ebee",
+                        backgroundColor: "#f5f5f7",
                         borderRadius: "20px",
                         width: "100%",
                         cursor: "pointer",
@@ -490,12 +523,19 @@ const Dashboard = (props) => {
                 </CardContent>
               </Card>
 
-              {posts.map((item) => (
-                <Post key={item.post.text} data={item} />
-              ))}
-                {posts.map((item) => (
+              {
+              props.posts.loading ?
+              [1,2,3,4,5,6].map(item=>(
+                <LOADING key={item}/>
+              ))
+              :
+              posts.map((item) => (
+                <Post key={item.post.id} item={item} />
+              ))
+              }
+                {/* {props.posts.posts.map((item) => (
                   <ImagePost key={item.post.text} data={item} />
-                ))}
+                ))} */}
             </div>
           </main>
           <Drawer
@@ -505,7 +545,7 @@ const Dashboard = (props) => {
             classes={{ paper: classes.drawerPaper }}
           >
             <Toolbar variant="dense" />
-            <div className={classes.drawerContainer}>
+            <div className={classes.drawerContainer} style={{marginRight:"10px"}}>
               <div
                 style={{
                   display: "flex",
@@ -536,12 +576,15 @@ const Dashboard = (props) => {
                 </div>
               </div>
               <div>
+                {props.getMyFriends.map(item=>(
                 <Button
+                  key={item.id}
                   style={{
                     width: "100%",
                     position: "relative",
                     padding: "20px 0",
                   }}
+                  onClick={()=>handleOpenMessageBox(item)}
                 >
                   <div
                     style={{
@@ -564,7 +607,9 @@ const Dashboard = (props) => {
                       }}
                     ></div>
                     <img
-                      src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse3.mm.bing.net%2Fth%3Fid%3DOIP.m9qHgk2ERONA6d2G3loJFwHaHa%26pid%3DApi&f=1"
+                      src={
+                        "http://localhost:8000/media/" + item.profile_photo
+                      }
                       width="33px"
                       height="33px"
                       style={{
@@ -579,10 +624,11 @@ const Dashboard = (props) => {
                         marginLeft: "10px",
                       }}
                     >
-                      Abu Hasan Khan
+                      {item.user__first_name}
                     </Typography>
                   </div>
                 </Button>
+                  ))}
               </div>
               <Divider style={{ margin: "15px 0" }} />
               <div>
@@ -640,6 +686,15 @@ const Dashboard = (props) => {
         <CustomPostDialog
           open={open}
           handlePostDialogClose={handlePostDialogClose}
+          addPost={props.addPost}
+          user={{"user_id":props.auth.user.user_id,'profile_photo':props.auth.user.profile_photo,
+              'name':props.auth.user.name
+        }}
+        />
+        <MessageBox 
+          openMessageEl={openMessageEl}
+          setOpenMessageEl={setOpenMessageEl}
+          user={messageUser}
         />
       </div>
     </Layout1>
@@ -674,6 +729,19 @@ export async function getStaticProps({ req, res }) {
 const mapStateToProps = (state) => {
   return {
     auth: state.auth,
+    posts:state.posts,
+    getMyFriends: state.posts.myFriends,
+
   };
 };
-export default connect(mapStateToProps)(Dashboard);
+
+const mapDispatchToProps = dispatch =>{
+  return{
+      allPosts: (data) => dispatch(allPosts(data)),
+      addPost: (data) => dispatch(addPost(data)),
+      myFriends: (data) => dispatch(myFriends(data)),
+
+  }
+}
+
+export default connect(mapStateToProps,mapDispatchToProps)(Dashboard);

@@ -110,13 +110,13 @@ const AccountMenu = (props) =>{
       <MenuItem className={classes.menuItem}>
         <div className={classes.postHeader}>
           <img
-            src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.AyVv06KRxDIdsjyaJeD34QAAAA%26pid%3DApi&f=1"
+            src={props.user.profile_photo}
             width="60px"
             height="60px"
             className={classes.image}
           />
           <div className={classes.postInfo}>
-            <Typography className={classes.postUser1}>Alex morano</Typography>
+            <Typography className={classes.postUser1}>{props.user.name}</Typography>
             <div className={classes.postTimeSection}>
               <Typography className={classes.postTime}>
                 See your profile
