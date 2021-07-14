@@ -244,3 +244,43 @@ export const addMessage = (data) => dispatch =>{
 }) 
 
 }
+
+export const addMessageSocket = (data) => dispatch =>{
+
+    dispatch({
+      type:"ADD_MESSAGE",
+      payload:{
+        id:data.id,
+        text:data.text,
+        created_at:new Date(),
+        user:{
+          id:"u2",
+          name:data.receiver
+        }
+      }
+  })
+}
+
+export const getMessageInfo = (data) => (dispatch) =>{
+
+  axiosInstance({
+    method:"post",
+    url:`getmessageinfo/`,
+    data:{
+      sender: data.sender,
+      receiver: data.receiver,
+    },
+      headers:{
+      "Authorization": "JWT "+ Cookie.get("access_token")
+      }
+  }).then(res=>{
+    dispatch({
+      type:"MESSAGE_INFO",
+      payload:res.data
+
+    })
+  }).catch(err=>{
+    console.log(err)
+  })
+
+}

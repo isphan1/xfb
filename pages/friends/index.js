@@ -15,6 +15,7 @@ import {
   Paper,
   Tabs,
   Tab,
+  useMediaQuery,
 } from "@material-ui/core";
 import {
   Settings,
@@ -47,12 +48,20 @@ const useStyles = makeStyles((theme) => ({
     // height: "100vh",
     marginLeft: "320px",
     padding: "0 20px",
+    "@media (max-width: 990px)": {
+      marginLeft: "0px",
+    }
   },
   tabs: {
     // borderRight: `1px solid ${theme.palette.divider}`,
     "& .MuiTab-root": {
       maxWidth: "100%",
       padding: "0",
+    },
+  },
+  expandDiv:{
+    "@media (max-width: 400px)": {
+      minWidth:"100%"
     },
   },
   drawer: {
@@ -173,10 +182,34 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: "15px",
     textTransform: "capitalize",
   },
+  customTabs:{
+    display:"none",
+    "@media (max-width: 990px)": {
+      display: "block",
+    },
+
+    "& .MuiTab-root":{
+      fontSize:"13px",
+      textTransform:"capitalize",
+      padding:" 15px 10px",
+      minHeight:"0",
+      lineHeight:"0",
+      minWidth:"0"
+    },
+    "& .MuiTabs-flexContainer":{
+      justifyContent:"space-evenly",
+      flexWrap:"wrap",
+      marginTop:"30px"
+    },
+    "& .MuiTab-textColorInherit.Mui-selected ":{
+      color:"#f30c35"
+    }
+  }
 }));
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
+
 
   return (
     <div
@@ -185,7 +218,6 @@ function TabPanel(props) {
       id={`vertical-tabpanel-${index}`}
       aria-labelledby={`vertical-tab-${index}`}
       {...other}
-      style={{ marginTop: "48px" }}
     >
       {value === index && <>{children}</>}
     </div>
@@ -246,6 +278,8 @@ const index = ({
 
   const [myFriends, setMyfriends] = React.useState([]);
 
+  const matches = useMediaQuery("(max-width:450px)");
+
   React.useEffect(() => {
     allFriendsF({ user_id: user.user_id });
     friendRequestsF({ user_id: user.user_id });
@@ -300,7 +334,7 @@ const index = ({
           </IconButton>
         </div>
         <Tabs
-          orientation="vertical"
+          orientation= "vertical"
           // variant="scrollable"
           TabIndicatorProps={{
             style: {
@@ -309,7 +343,6 @@ const index = ({
           }}
           value={value}
           onChange={handleChange}
-          aria-label="Vertical tabs example"
           className={classes.tabs}
         >
           {friendsLink.map((item, id) => (
@@ -353,6 +386,25 @@ const index = ({
       </Drawer>
 
       <div className={classes.root}>
+        <Tabs
+          orientation="horizontal"
+          // indicatorColor="primary"
+          TabIndicatorProps={{
+            style: {
+              display: "none",
+            },
+          }}
+          value={value}
+          onChange={handleChange}
+          className={classes.customTabs}
+        >
+          {friendsLink.map((item, id) => (
+            <Tab
+              key={item.title}
+              {...a11yProps(id)}
+              label={item.title}/>
+          ))}
+        </Tabs>
         <TabPanel value={value} index={0}>
           <div className={classes.friendsBox} style={{ padding: "20px 0" }}>
             <Typography className={classes.friendsBoxTitle}>
@@ -368,15 +420,18 @@ const index = ({
                 key={item.id}
                 item
                 md={3}
+                sm={4}
+                xs={6}
                 container
                 direction="column"
+                className={classes.expandDiv}
                 style={{
                   borderRadius: "7.5px",
                 }}
               >
                 <Paper className={classes.paper}>
                   <img
-                    src={"http://localhost:8000/media/" + item.profile_photo}
+                    src={ item.profile_photo}
                     className={classes.friendsImage}
                   />
                   <div className={classes.friendsInfo}>
@@ -447,7 +502,7 @@ const index = ({
                     <Paper className={classes.paper}>
                       <img
                         src={
-                          "http://localhost:8000/media/" + item.profile_photo
+                           item.profile_photo
                         }
                         className={classes.friendsImage}
                       />
@@ -513,7 +568,6 @@ const index = ({
                 height="112px"
               />
               <Typography style={{ fontSize: "18px" }}>
-                {" "}
                 No Friends to Show
               </Typography>
               <Typography>
@@ -537,6 +591,9 @@ const index = ({
                     key={item.id}
                     item
                     md={3}
+                    sm={4}
+                    xs={6}
+                    className={classes.expandDiv}
                     container
                     direction="column"
                     style={{
@@ -546,7 +603,7 @@ const index = ({
                     <Paper className={classes.paper}>
                       <img
                         src={
-                          "http://localhost:8000/media/" + item.profile_photo
+                           item.profile_photo
                         }
                         className={classes.friendsImage}
                       />

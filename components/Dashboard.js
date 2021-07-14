@@ -36,16 +36,23 @@ import {
   ChatBubbleOutline,
   ThumbUpOutlined,
   ReplyOutlined,
-  MessageSharp
+  MessageSharp,
 } from "@material-ui/icons";
 import Post from "../components/Post";
 import CustomPostDialog from "../components/CustomPostDialog";
 import axios from "axios";
 import Cookie from "js-cookie";
 import Layout1 from "./Layout1";
-import { addPost, allFriends, allPosts, friendRequests, myFriends } from "../redux/post/action";
+import {
+  addPost,
+  allFriends,
+  allPosts,
+  friendRequests,
+  myFriends,
+} from "../redux/post/action";
 import LOADING from "../common/Loading";
 import MessageBox from "./MessageBox";
+import { getMessageInfo } from "../redux/auth/action";
 
 const drawerWidth = 240;
 
@@ -82,6 +89,20 @@ const useStyles = makeStyles((theme) => ({
       "& img": {
         transform: "scale(1.01)",
       },
+    },
+  },
+  postBoxInput:{
+    marginLeft: "5px",
+    backgroundColor: "#f5f5f7",
+    borderRadius: "20px",
+    width: "100%",
+    cursor: "pointer",
+    outline: "none",
+    border: "none",
+    padding: "7.5px 10px",
+    fontSize: "18px",
+    "@media (max-width: 400px)": {
+      fontSize: "14px",
     },
   },
   storyBoxAdd: {
@@ -157,7 +178,7 @@ const useStyles = makeStyles((theme) => ({
     position: "absolute",
     background: "#fff",
     height: "50px",
-    border:"1px solid #efe9e9",
+    border: "1px solid #efe9e9",
     width: "50px",
     borderRadius: "50%",
     top: "38%",
@@ -200,7 +221,7 @@ const useStyles = makeStyles((theme) => ({
   viewPost: {},
   drawer: {
     width: drawerWidth,
-    zIndex: "1",
+    zIndex: "10",
     flexShrink: 0,
     "@media (max-width: 990px)": {
       display: "none",
@@ -214,6 +235,25 @@ const useStyles = makeStyles((theme) => ({
   drawerContainer: {
     overflow: "auto",
   },
+
+  hoverIcon:{
+    position: "fixed",
+    cursor: "pointer",
+    top: "85vh",
+    right: "30px",
+    border: "1px solid #ccc",
+    zIndex: "1300",
+    width: "50px",
+    height: "50px",
+    backgroundColor: "#fff",
+    borderRadius: "50px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    "@media (max-width: 700px)": {
+      display:"none"
+    }
+    }
 }));
 
 const postbuttons = [
@@ -237,7 +277,8 @@ const postbuttons = [
 const story = [
   {
     icon: "https://www.pngkit.com/png/full/115-1150342_user-avatar-icon-iconos-de-mujeres-a-color.png",
-    image: "https://www.nydailynews.com/resizer/CEEJYohg9VZAqlqB4WEg0wTz4LA=/1200x0/top/arc-anglerfish-arc2-prod-tronc.s3.amazonaws.com/public/TAU2JU73A5HNVJO7IPO5J3XJOU.jpg",
+    image:
+      "https://www.nydailynews.com/resizer/CEEJYohg9VZAqlqB4WEg0wTz4LA=/1200x0/top/arc-anglerfish-arc2-prod-tronc.s3.amazonaws.com/public/TAU2JU73A5HNVJO7IPO5J3XJOU.jpg",
     title: "ICC World Cricket",
   },
   {
@@ -269,8 +310,8 @@ const Dashboard = (props) => {
 
   const [open, setOpen] = React.useState(false);
   const [posts, setPosts] = React.useState([]);
-  const [openMessageEl,setOpenMessageEl] = React.useState(false)
-  const [messageUser,setMessageUser] = React.useState({})
+  const [openMessageEl, setOpenMessageEl] = React.useState(false);
+  const [messageUser, setMessageUser] = React.useState({});
 
   const handlePostDialogOpen = () => {
     setOpen(true);
@@ -281,23 +322,19 @@ const Dashboard = (props) => {
   };
 
   React.useEffect(() => {
-    props.allPosts({"username":props.auth.username})
+    props.allPosts({ username: props.auth.username });
     props.myFriends({ user_id: props.auth.user.user_id });
+    props.getMessageInfo({ sender: props.auth.username });
   }, []);
-  
 
   React.useEffect(() => {
-    setPosts(props.posts.posts)
+    setPosts(props.posts.posts);
   }, [props.posts.posts]);
 
-
   const handleOpenMessageBox = (user) => {
-    setOpenMessageEl(true)
+    setOpenMessageEl(true);
     setMessageUser(user);
-
   };
-
-  
 
   return (
     <Layout1>
@@ -324,28 +361,13 @@ const Dashboard = (props) => {
             </div>
           </Drawer>
 
-          <main style={{ flexGrow: 1,position:"relative" }}>
-
-          <div 
-          // onClick={handleOpenMessageEl}
-          style={{
-            position:"fixed",
-            cursor:"pointer",
-            top:"85vh",
-            right:"30px",
-            border:"1px solid #ccc",
-            zIndex:"1500",
-            width:"50px",
-            height:"50px",
-            backgroundColor:"#fff",
-            borderRadius:"50px",
-            display:"flex",
-            justifyContent:"center",
-            alignItems:"center",
-          }}
-          >
-            <MessageSharp />
-          </div>
+          <main style={{ flexGrow: 1, position: "relative" }}>
+            <div
+              // onClick={handleOpenMessageEl}
+              className={classes.hoverIcon}
+            >
+              <MessageSharp />
+            </div>
             <div className={classes.story}>
               <IconButton className={classes.floatButton}>
                 <KeyboardBackspace
@@ -442,22 +464,12 @@ const Dashboard = (props) => {
                       width="40px"
                       height="40px"
                       style={{
-                        borderRadius:"50px"
+                        borderRadius: "50px",
                       }}
                     />
                     <div
                       onClick={handlePostDialogOpen}
-                      style={{
-                        marginLeft: "5px",
-                        backgroundColor: "#f5f5f7",
-                        borderRadius: "20px",
-                        width: "100%",
-                        cursor: "pointer",
-                        outline: "none",
-                        border: "none",
-                        padding: "7.5px 10px",
-                        fontSize: "18px",
-                      }}
+                      className={classes.postBoxInput}
                     >
                       What's on your mind, Abu
                     </div>
@@ -523,17 +535,10 @@ const Dashboard = (props) => {
                 </CardContent>
               </Card>
 
-              {
-              props.posts.loading ?
-              [1,2,3,4,5,6].map(item=>(
-                <LOADING key={item}/>
-              ))
-              :
-              posts.map((item) => (
-                <Post key={item.post.id} item={item} />
-              ))
-              }
-                {/* {props.posts.posts.map((item) => (
+              {props.posts.loading
+                ? [1, 2, 3, 4, 5, 6].map((item) => <LOADING key={item} />)
+                : posts.map((item) => <Post key={item.post.id} item={item} />)}
+              {/* {props.posts.posts.map((item) => (
                   <ImagePost key={item.post.text} data={item} />
                 ))} */}
             </div>
@@ -545,7 +550,10 @@ const Dashboard = (props) => {
             classes={{ paper: classes.drawerPaper }}
           >
             <Toolbar variant="dense" />
-            <div className={classes.drawerContainer} style={{marginRight:"10px"}}>
+            <div
+              className={classes.drawerContainer}
+              style={{ marginRight: "10px" }}
+            >
               <div
                 style={{
                   display: "flex",
@@ -576,59 +584,59 @@ const Dashboard = (props) => {
                 </div>
               </div>
               <div>
-                {props.getMyFriends.map(item=>(
-                <Button
-                  key={item.id}
-                  style={{
-                    width: "100%",
-                    position: "relative",
-                    padding: "20px 0",
-                  }}
-                  onClick={()=>handleOpenMessageBox(item)}
-                >
-                  <div
+                {props.getMyFriends.map((item) => (
+                  <Button
+                    key={item.id}
                     style={{
-                      display: "flex",
-                      position: "absolute",
-                      left: "5px",
-                      alignItems: "center",
+                      width: "100%",
+                      position: "relative",
+                      padding: "20px 0",
                     }}
+                    onClick={() => handleOpenMessageBox(item)}
                   >
                     <div
                       style={{
+                        display: "flex",
                         position: "absolute",
-                        width: "12px",
-                        height: "12px",
-                        borderRadius: "20px",
-                        backgroundColor: "#5ad01c",
-                        left: "22px",
-                        top: "22px",
-                        border: "2px solid #eee",
-                      }}
-                    ></div>
-                    <img
-                      src={
-                        "http://localhost:8000/media/" + item.profile_photo
-                      }
-                      width="33px"
-                      height="33px"
-                      style={{
-                        borderRadius: "50px",
-                      }}
-                    />
-                    <Typography
-                      style={{
-                        textTransform: "capitalize",
-                        fontSize: "14px",
-                        fontWeight: "300",
-                        marginLeft: "10px",
+                        left: "5px",
+                        alignItems: "center",
                       }}
                     >
-                      {item.user__first_name}
-                    </Typography>
-                  </div>
-                </Button>
-                  ))}
+                      <div
+                        style={{
+                          position: "absolute",
+                          width: "12px",
+                          height: "12px",
+                          borderRadius: "20px",
+                          backgroundColor: "#5ad01c",
+                          left: "22px",
+                          top: "22px",
+                          border: "2px solid #eee",
+                        }}
+                      ></div>
+                      <img
+                        src={
+                          item.profile_photo
+                        }
+                        width="33px"
+                        height="33px"
+                        style={{
+                          borderRadius: "50px",
+                        }}
+                      />
+                      <Typography
+                        style={{
+                          textTransform: "capitalize",
+                          fontSize: "14px",
+                          fontWeight: "300",
+                          marginLeft: "10px",
+                        }}
+                      >
+                        {item.user__first_name}
+                      </Typography>
+                    </div>
+                  </Button>
+                ))}
               </div>
               <Divider style={{ margin: "15px 0" }} />
               <div>
@@ -687,11 +695,13 @@ const Dashboard = (props) => {
           open={open}
           handlePostDialogClose={handlePostDialogClose}
           addPost={props.addPost}
-          user={{"user_id":props.auth.user.user_id,'profile_photo':props.auth.user.profile_photo,
-              'name':props.auth.user.name
-        }}
+          user={{
+            user_id: props.auth.user.user_id,
+            profile_photo: props.auth.user.profile_photo,
+            name: props.auth.user.name,
+          }}
         />
-        <MessageBox 
+        <MessageBox
           openMessageEl={openMessageEl}
           setOpenMessageEl={setOpenMessageEl}
           user={messageUser}
@@ -729,19 +739,18 @@ export async function getStaticProps({ req, res }) {
 const mapStateToProps = (state) => {
   return {
     auth: state.auth,
-    posts:state.posts,
+    posts: state.posts,
     getMyFriends: state.posts.myFriends,
-
   };
 };
 
-const mapDispatchToProps = dispatch =>{
-  return{
-      allPosts: (data) => dispatch(allPosts(data)),
-      addPost: (data) => dispatch(addPost(data)),
-      myFriends: (data) => dispatch(myFriends(data)),
+const mapDispatchToProps = (dispatch) => {
+  return {
+    allPosts: (data) => dispatch(allPosts(data)),
+    addPost: (data) => dispatch(addPost(data)),
+    myFriends: (data) => dispatch(myFriends(data)),
+    getMessageInfo: (data) => dispatch(getMessageInfo(data)),
+  };
+};
 
-  }
-}
-
-export default connect(mapStateToProps,mapDispatchToProps)(Dashboard);
+export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);

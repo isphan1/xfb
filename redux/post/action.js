@@ -3,9 +3,9 @@ import Cookie from 'js-cookie'
 
 export const allPosts = (data) => (dispatch) => {
 
-    dispatch({
-        type:'LOADING',
-      })
+    // dispatch({
+    //     type:'LOADING',
+    //   })
 
     axiosInstance({
         method:"post",

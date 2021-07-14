@@ -17,7 +17,7 @@ import {
   StorefrontOutlined,
   Home,
   Flag,
-  People
+  People,
 } from "@material-ui/icons";
 import {
   AppBar,
@@ -32,7 +32,7 @@ import {
 } from "@material-ui/core";
 import { useRouter } from "next/router";
 import { connect } from "react-redux";
-import { setTabValue } from "../redux/auth/action";
+import { getMessageInfo, setTabValue } from "../redux/auth/action";
 const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
@@ -158,7 +158,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Header = (props) =>{
+const Header = (props) => {
   const classes = useStyles();
   const router = useRouter();
   const username = "kamal";
@@ -194,7 +194,7 @@ const Header = (props) =>{
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
   const [accountAnchor, setAccountAnchor] = React.useState(null);
   const [active, setActive] = React.useState("");
-  const [results,setResults] = React.useState([])
+  const [results, setResults] = React.useState([]);
 
   const matches = useMediaQuery("(min-width:1120px)");
 
@@ -210,7 +210,7 @@ const Header = (props) =>{
   const handleCloseSearch = () => {
     setSearchAnchor(null);
     setSearch("");
-    setResults([])
+    setResults([]);
   };
 
   const handleOpenCreate = (e) => {
@@ -246,20 +246,19 @@ const Header = (props) =>{
   };
 
   const addActiveClass = (val) => {
-    props.setTabValue({'tab':val.title})
+    props.setTabValue({ tab: val.title });
     setActive(props.tabValue);
-    router.push(`/${val.href}`)
+    router.push(`/${val.href}`);
     // console.log(val.title, active);
   };
 
+  React.useEffect(() => {
+    setActive(props.tabValue);
+  }, []);
 
   React.useEffect(() => {
     setActive(props.tabValue);
-  }, [])
-
-  React.useEffect(() => {
-    setActive(props.tabValue);
-  }, [props.tabValue])
+  }, [props.tabValue]);
 
   const toolTipIcon = [
     { icon: <Add />, title: "Create", func: handleOpenCreate },
@@ -325,37 +324,49 @@ const Header = (props) =>{
               </IconButton>
             </Grid>
             <Hidden xsDown>
-              <Grid item sm={9} md={matches1 ? 8 : 5} className={classes.buttonTabs}>
+              <Grid
+                item
+                sm={9}
+                md={matches1 ? 8 : 5}
+                className={classes.buttonTabs}
+              >
                 {tabs.map((item) => (
                   // <Link key={item.title} href={`/${item.href}`}>
-                    <Tooltip
+                  <Tooltip
                     key={item.title}
-                      title={item.title}
-                      classes={{ tooltip: classes.customWidth }}
+                    title={item.title}
+                    classes={{ tooltip: classes.customWidth }}
+                  >
+                    <Button
+                      onClick={() => addActiveClass(item)}
+                      className={
+                        active == item.title
+                          ? classes.buttonActive
+                          : classes.buttonTab
+                      }
                     >
-                      <Button
-                        onClick={()=>addActiveClass(item)}
-                        className={
-
-                          active == item.title ? classes.buttonActive : classes.buttonTab
-                        }
-                      >
-                        {item.icon}
-                      </Button>
-                    </Tooltip>
+                      {item.icon}
+                    </Button>
+                  </Tooltip>
                   // </Link>
                 ))}
               </Grid>
             </Hidden>
-            <Grid item sm={1} md={matches1 ? 2 : 4} xs={6} style={{ textAlign: "end" }}>
+            <Grid
+              item
+              sm={1}
+              md={matches1 ? 2 : 4}
+              xs={6}
+              style={{ textAlign: "end" }}
+            >
               <Hidden lgUp>
                 {/* <Link
                   href="/user/[username]/settings"
                   as={`/user/${username}/settings`}
                 > */}
-                  <IconButton edge="start" onClick={(e)=>handleOpenAccount(e)}>
-                    <MenuIcon />
-                  </IconButton>
+                <IconButton edge="start" onClick={(e) => handleOpenAccount(e)}>
+                  <MenuIcon />
+                </IconButton>
                 {/* </Link> */}
               </Hidden>
               <Hidden mdDown>
@@ -364,7 +375,7 @@ const Header = (props) =>{
                     style={{
                       padding: "5px 10px",
                       margin: "0 10px",
-                      textTransform:"capitalize"
+                      textTransform: "capitalize",
                     }}
                   >
                     <img
@@ -372,7 +383,7 @@ const Header = (props) =>{
                       width="30px"
                       height="30px"
                       style={{
-                        borderRadius:"40px",
+                        borderRadius: "40px",
                         marginRight: "5px",
                       }}
                     />
@@ -430,20 +441,20 @@ const Header = (props) =>{
       />
     </div>
   );
-}
-
+};
 
 const mapStateToProps = (state) => {
   return {
     auth: state.auth.user,
-    tabValue:state.auth.currentTab
+    username: state.auth.username,
+    tabValue: state.auth.currentTab,
   };
 };
 
-const mapDispatchToProps = dispatch =>{
-  return{
+const mapDispatchToProps = (dispatch) => {
+  return {
     setTabValue: (data) => dispatch(setTabValue(data)),
-  }
-}
+  };
+};
 
-export default connect(mapStateToProps,mapDispatchToProps)(Header)
+export default connect(mapStateToProps, mapDispatchToProps)(Header);

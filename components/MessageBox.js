@@ -7,7 +7,7 @@ import {
 import React from "react";
 import { connect } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
-import {io} from 'socket.io-client'
+import { io } from "socket.io-client";
 import {
   Call,
   Close,
@@ -24,7 +24,12 @@ import {
 } from "@material-ui/icons";
 import axiosInstance from "./axios";
 import Cookie from "js-cookie";
-import { addMessage, allMessages } from "../redux/auth/action";
+import {
+  addMessage,
+  addMessageSocket,
+  allMessages,
+  getMessageRomm,
+} from "../redux/auth/action";
 const useStyles = makeStyles((theme) => ({
   root: {
     position: "fixed",
@@ -50,16 +55,22 @@ function MessageBox({
   addMessage,
   allMessages,
   myMessages,
+  addMessageSocket,
+  messageInfo,
 }) {
   const classes = useStyles();
 
-  const mySocket = io("ws://127.0.0.1:5000/")
+  const [mySocket, setMySocket] = React.useState(io("ws://127.0.0.1:5000/"));
+
+  const [infos, setInfos] = React.useState([]);
 
   const [messages, setMessages] = React.useState([]);
 
   const [msg, setMsg] = React.useState("");
 
   const [expandMsg, setExpandMsg] = React.useState(false);
+
+  const [socketId, setSocketId] = React.useState("");
 
   const messageEl = React.useRef(null);
 
@@ -72,68 +83,83 @@ function MessageBox({
     }
   };
 
-const handleSubmitMsg = (e) =>{
-  if(e.key === "Enter" && !e.shiftKey && msg.trim().length > 0){
-    e.preventDefault()
-    // addMessage({
-    //   sender: username,
-    //   receiver: user.user__username,
-    //   text:msg,
-    //   id:uuidv4()
-    // })
-    mySocket.emit('chatMsg',msg)
-    setExpandMsg(false)
-    setMsg("")
-  }
-}
-
-const handleAddLike = (e) =>{
-  e.preventDefault()
-  addMessage({
-    sender: username,
-    receiver: user.user__username,
-    text:":D",
-    id:uuidv4()
-  })
-}
-
-const scrollToBottom = () => {
-  messageEl.current?.scrollIntoView({ behavior: "smooth" })
-}
-
-React.useEffect(() => {
-  if (messageEl.current) {
-    messageEl.current.scrollIntoView(
-      {
-        behavior: 'smooth',
-        block: 'end',
-        // inline: 'nearest'
-      })
-  }
-})
-
   React.useEffect(() => {
     if (openMessageEl) {
+      infos.map((item) => {
+        if (item.username === user.user__username) {
+          mySocket.emit("join", { name: username, room: item.room });
+        }
+      });
+
       allMessages({
         sender: username,
         receiver: user.user__username,
-
       });
-        setMessages(myMessages);    
+      setMessages(myMessages);
     }
   }, [openMessageEl, user]);
+
+  React.useEffect(() => {
+    mySocket.on("newMsg", (item) => {
+      if (item.user.name !== username) {
+        addMessageSocket({
+          sender: username,
+          receiver: user.user__username,
+          text: item.msg,
+          id: uuidv4(),
+        });
+      }
+    });
+    setInfos(messageInfo);
+  }, []);
+
+  const handleSubmitMsg = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && msg.trim().length > 0) {
+      e.preventDefault();
+      addMessage({
+        sender: username,
+        receiver: user.user__username,
+        text: msg,
+        id: uuidv4(),
+      });
+      mySocket.emit("chatMsg", { msg: msg, id: socketId });
+      setExpandMsg(false);
+      setMsg("");
+    }
+  };
+
+  const handleAddLike = (e) => {
+    e.preventDefault();
+    addMessage({
+      sender: username,
+      receiver: user.user__username,
+      text: ":D",
+      id: uuidv4(),
+    });
+  };
+
+  const handleCloseMessage = () => {
+    setOpenMessageEl(false);
+    mySocket.emit("end", socketId);
+  };
+
+  React.useEffect(() => {
+    if (messageEl.current) {
+      messageEl.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+        // inline: 'nearest'
+      });
+    }
+  });
 
   React.useEffect(() => {
     setMessages(myMessages);
   }, [myMessages]);
 
-
-  React.useEffect(()=>{
-    if(openMessageEl){
-      mySocket.emit('join',{'name':username,'room':username + user.user__username})
-      console.log(username)
-    }
-  },[openMessageEl])
+  React.useEffect(() => {
+    setInfos(messageInfo);
+  }, [messageInfo]);
 
   return (
     <div
@@ -158,7 +184,7 @@ React.useEffect(() => {
           style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
         >
           <img
-            src={"http://localhost:8000/media/" + user.profile_photo}
+            src={user.profile_photo}
             style={{ width: "25px", height: "25px", borderRadius: "40px" }}
           />
           <Typography
@@ -184,18 +210,18 @@ React.useEffect(() => {
           <IconButton size="small">
             <Remove style={{ fontSize: "20px" }} />
           </IconButton>
-          <IconButton size="small" onClick={() => setOpenMessageEl(false)}>
+          <IconButton size="small" onClick={() => handleCloseMessage()}>
             <Close style={{ fontSize: "20px" }} />
           </IconButton>
         </div>
       </div>
       <div
-      // ref={messageEl} 
+        // ref={messageEl}
         style={{
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          overflowY:"scroll",
+          overflowY: "scroll",
           alignItems: "center",
           marginTop: "40px",
           overflow: "scroll",
@@ -204,7 +230,7 @@ React.useEffect(() => {
         }}
       >
         <img
-          src={"http://localhost:8000/media/" + user.profile_photo}
+          src={user.profile_photo}
           style={{
             width: "75px",
             height: "75px",
@@ -240,7 +266,7 @@ React.useEffect(() => {
             key={item.id}
           >
             <img
-              src={"http://localhost:8000/media/" + user.profile_photo}
+              src={user.profile_photo}
               style={{
                 width: "25px",
                 height: "25px",
@@ -265,7 +291,7 @@ React.useEffect(() => {
             </div>
           </div>
         ))}
-        <div ref={messageEl} style={{marginTop:"50px"}}/>
+        <div ref={messageEl} style={{ marginTop: "50px" }} />
       </div>
       <div
         style={{
@@ -333,7 +359,7 @@ React.useEffect(() => {
             padding: "0 10px",
             borderRadius: "30px",
           }}
-          onKeyPress={e => handleSubmitMsg(e)}
+          onKeyPress={(e) => handleSubmitMsg(e)}
           endAdornment={
             // <InsertEmoticon style={{fontSize:"20px", backgroundColor:"#1b8cf7",borderRadius:"40px"}} />
 
@@ -347,9 +373,7 @@ React.useEffect(() => {
           }
           placeholder="Aa"
         />
-        <IconButton size="small"
-          onClick={(e)=>handleAddLike(e)}
-        >
+        <IconButton size="small" onClick={(e) => handleAddLike(e)}>
           <ThumbUpSharp
             style={{ fontSize: "20px", color: "#1b8cf7", borderRadius: "40px" }}
           />
@@ -364,6 +388,7 @@ const mapStateToProps = (state) => {
     username: state.auth.username,
     currentUser: state.auth.user,
     myMessages: state.auth.messages,
+    messageInfo: state.auth.info,
   };
 };
 
@@ -371,6 +396,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     allMessages: (data) => dispatch(allMessages(data)),
     addMessage: (data) => dispatch(addMessage(data)),
+    addMessageSocket: (data) => dispatch(addMessageSocket(data)),
   };
 };
 

@@ -7,7 +7,8 @@ const initialState = {
     errors:{},
     loading:true,
     currentTab:"Home",
-    messages:[]
+    messages:[],
+    info : []
 }
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -82,7 +83,11 @@ export default function auth(state=initialState,action){
                     ...state,
                     messages:[...state.messages,action.payload]
                 }
-
+        case "MESSAGE_INFO":
+            return{
+                ...state,
+                info:action.payload
+            }
         default:
             return state
     }

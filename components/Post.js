@@ -99,8 +99,8 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "5px",
   },
   postText: {
-    fontSize: "15px",
-    fontWeight:"500",
+    fontSize: "16px",
+    fontWeight:"400",
     margin: "10px 0",
     textAlign: "justify",
   },
